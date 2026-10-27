@@ -86,6 +86,10 @@ def torus(R, r, c, d, n=24, m=8):
     return np.array(tris)
 
 
+def rects(rs, z0, z1):
+    return np.concatenate([box(x0, y0, z0, x1, y1, z1) for x0, y0, x1, y1 in rs])
+
+
 def rotm(ax, deg):
     ax = np.array(ax, float); ax /= np.linalg.norm(ax); x, y, z = ax
     c, s = math.cos(math.radians(deg)), math.sin(math.radians(deg)); C = 1 - c
@@ -96,7 +100,7 @@ def rotm(ax, deg):
 
 def mesh(p):
     k, *a = p["prim"]
-    t = {"box": box, "cyl": cyl, "tube": tube, "prismx": prismx, "dome": dome, "torus": torus}[k](*a)
+    t = {"box": box, "cyl": cyl, "tube": tube, "prismx": prismx, "dome": dome, "torus": torus, "rects": rects}[k](*a)
     for op in p["tf"]:
         if op[0] == "rot":
             t = t @ rotm(op[1], op[2]).T

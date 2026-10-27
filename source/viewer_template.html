@@ -1,0 +1,125 @@
+<title>MediGuard Care-Pro C</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: drafting-table tool — 3D viewport left, part tree + view controls right; stacks on phones */
+:root{
+  --bg:#eef1f3; --panel:#ffffff; --fg:#1d2730; --muted:#5d6b77; --line:#d3dae0;
+  --accent:#d9731c; --stage:#e3e8ec;
+  --display:"Archivo",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141a1f; --panel:#1c242b; --fg:#e4eaef; --muted:#93a1ad; --line:#2e3a44; --accent:#f08a33; --stage:#20292f; color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141a1f; --panel:#1c242b; --fg:#e4eaef; --muted:#93a1ad; --line:#2e3a44; --accent:#f08a33; --stage:#20292f; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--display);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px;box-sizing:border-box}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:16px;height:100%;min-height:520px}
+header{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px}
+h1{font-size:22px;margin:0;font-weight:700;letter-spacing:.01em;text-wrap:balance}
+.sub{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.stage{position:relative;background:var(--stage);border:1px solid var(--line);border-radius:6px;overflow:hidden;min-height:360px}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+.hint{position:absolute;left:12px;bottom:10px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.views{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap}
+button{font-family:var(--mono);font-size:12px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:6px 10px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+aside{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;overflow:auto;display:flex;flex-direction:column;gap:14px;min-width:0}
+.lbl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:500}
+.row{display:flex;align-items:center;gap:8px;font-size:14px}
+.row input{accent-color:var(--accent);width:16px;height:16px}
+.count{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.sw{width:10px;height:10px;border-radius:2px;border:1px solid var(--line)}
+.spec{font-family:var(--mono);font-size:12px;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-variant-numeric:tabular-nums}
+.spec dt{color:var(--muted)} .spec dd{margin:0}
+#pick{font-family:var(--mono);font-size:12px;min-height:1.4em;color:var(--accent);word-break:break-all}
+@media (max-width:760px){.wrap{grid-template-columns:1fr;height:auto}.stage{height:62vh}}
+</style>
+<div class="wrap">
+  <header><h1>MediGuard Care-Pro C</h1><span class="sub">8-drawer pill dispenser · 160 × 200 × 250 mm · drawer 3 extended 70 mm</span></header>
+  <div class="stage">
+    <canvas id="cv"></canvas>
+    <div class="views">
+      <button id="vIso">Iso</button><button id="vFront">Front</button><button id="vRight">Right</button><button id="vTop">Top</button><button id="vScreen">Screen</button>
+    </div>
+    <div class="hint">Screen button = close-up of display · drag to rotate · right-drag to pan · scroll to zoom · click a part to name it</div>
+  </div>
+  <aside>
+    <div><div class="lbl">Selected part</div><div id="pick">—</div></div>
+    <label class="row"><input type="checkbox" id="cut"> Cut-away (hide right wall &amp; roof)</label>
+    <div><div class="lbl">Groups</div><div id="groups" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div></div>
+    <div><div class="lbl">Key dimensions (mm)</div>
+      <dl class="spec" style="margin-top:8px">
+        <dt>Body</dt><dd>160 W × 200 D × 250 H</dd>
+        <dt>Base</dt><dd>Z 0–20</dd>
+        <dt>Drawers</dt><dd>8 × 22 pitch, Z 20–196</dd>
+        <dt>Fronts</dt><dd>136 × 20, 2 gap</dd>
+        <dt>Header</dt><dd>54 H, 70 D slant ≈ 37.6°</dd>
+        <dt>Display</dt><dd>72 × 52 (58 × 43 active)</dd>
+        <dt>Screen UI</dt><dd>320 × 240 px layout</dd>
+        <dt>Speaker</dt><dd>Ø 42</dd>
+        <dt>Pulleys</dt><dd>Ø 16, 165 C-to-C</dd>
+        <dt>Open depth</dt><dd>270</dd>
+      </dl></div>
+  </aside>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const DATA = __DATA__;
+const cv = document.getElementById('cv');
+const renderer = new THREE.WebGLRenderer({canvas:cv, antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+const scene = new THREE.Scene();
+const cam = new THREE.PerspectiveCamera(30,1,1,5000); cam.up.set(0,0,1);
+const ctl = new THREE.OrbitControls(cam, cv); ctl.enableDamping = true;
+const C = new THREE.Vector3(0,65,140); ctl.target.copy(C);
+scene.add(new THREE.HemisphereLight(0xffffff,0x8a939b,0.75));
+const dl = new THREE.DirectionalLight(0xffffff,0.65); dl.position.set(-300,-400,600); scene.add(dl);
+const dl2 = new THREE.DirectionalLight(0xffffff,0.3); dl2.position.set(400,300,200); scene.add(dl2);
+const groups = {}, meshes = [];
+for (const p of DATA){
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(p.v,3)); g.computeVertexNormals();
+  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({color:new THREE.Color(...p.c), roughness:.6, metalness:.05, flatShading:true, side:THREE.DoubleSide}));
+  m.userData = p; scene.add(m); meshes.push(m);
+  (groups[p.g] = groups[p.g] || []).push(m);
+}
+const gdiv = document.getElementById('groups');
+Object.keys(groups).forEach((k,i)=>{
+  const c = groups[k][0].userData.c, id = 'g'+i;
+  const l = document.createElement('label'); l.className='row';
+  l.innerHTML = `<input type="checkbox" id="${id}" checked><span class="sw" style="background:rgb(${c.map(x=>x*255|0)})"></span>${k.replace(/_/g,' ')}<span class="count">${groups[k].length}</span>`;
+  gdiv.appendChild(l);
+  l.querySelector('input').addEventListener('change', apply);
+});
+const cut = document.getElementById('cut'); cut.addEventListener('change', apply);
+function apply(){
+  Object.keys(groups).forEach((k,i)=>{
+    const on = document.getElementById('g'+i).checked;
+    groups[k].forEach(m=> m.visible = on && !(cut.checked && m.userData.cut));
+  });
+}
+document.getElementById('vIso').onclick=()=>view([-0.75,-1,0.7]);
+document.getElementById('vFront').onclick=()=>view([0,-1,0.001]);
+document.getElementById('vRight').onclick=()=>view([1,0,0.001]);
+document.getElementById('vTop').onclick=()=>view([0,-0.001,1]);
+const SC = new THREE.Vector3(__SC__), SN = new THREE.Vector3(__SN__);
+document.getElementById('vScreen').onclick=()=>{ ctl.target.copy(SC); cam.position.copy(SC).add(SN.clone().multiplyScalar(140)); ctl.update(); };
+function view(dir, dist=620){ ctl.target.copy(C); cam.position.copy(C).add(new THREE.Vector3(...dir).normalize().multiplyScalar(dist)); ctl.update(); }
+view([-0.75,-1,0.7]);
+const ray = new THREE.Raycaster(), mv = new THREE.Vector2(); let down=null;
+cv.addEventListener('pointerdown',e=>down=[e.clientX,e.clientY]);
+cv.addEventListener('pointerup',e=>{
+  if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>4) return;
+  const r = cv.getBoundingClientRect();
+  mv.set((e.clientX-r.left)/r.width*2-1, -(e.clientY-r.top)/r.height*2+1);
+  ray.setFromCamera(mv,cam);
+  const hit = ray.intersectObjects(meshes.filter(m=>m.visible))[0];
+  document.getElementById('pick').textContent = hit ? hit.object.userData.n.replace(/_/g,' ') + '  ·  ' + hit.object.userData.g.replace(/_/g,' ') : '—';
+});
+function size(){ const r = cv.parentElement.getBoundingClientRect(); renderer.setSize(r.width,r.height,false); cam.aspect=r.width/r.height; cam.updateProjectionMatrix(); }
+new ResizeObserver(size).observe(cv.parentElement); size();
+(function loop(){ ctl.update(); renderer.render(scene,cam); requestAnimationFrame(loop); })();
+</script>

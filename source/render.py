@@ -65,4 +65,6 @@ if __name__ == "__main__":
     render(parts, -35, 25, title="MediGuard Care-Pro C — front iso (drawer #3 open)", path=f"{out}/preview_iso_front.png")
     render(parts, 50, 22, hide_cut=True, title="Cut-away: right wall & roof hidden", path=f"{out}/preview_cutaway.png")
     render(parts, 0, 0, title="Front view", path=f"{out}/preview_front.png")
+    scr = [p for p in parts if p["group"] == "Display_Screen" or p["name"].startswith("Display_")]
+    render(scr, 0, 90 - M.SLANT_ANG, size=1300, path=f"{out}/preview_screen.png")
     render(parts, 90, 0, hide_cut=True, title="Right side, wall hidden (internals)", path=f"{out}/preview_side_internal.png")

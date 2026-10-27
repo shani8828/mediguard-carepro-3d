@@ -8,6 +8,11 @@
 #   timing-belt pulleys 165 mm centre-to-centre, closed depth 200 mm
 import math
 
+try:                      # inside the FreeCAD macro the screen data is pasted above this file
+    UI_LAYERS
+except NameError:
+    from screen_ui import UI_LAYERS, UI_PX
+
 W, D, H = 160.0, 200.0, 250.0
 BASE_H = 20.0
 STACK_Z0, STACK_Z1 = 20.0, 196.0
@@ -24,7 +29,7 @@ NY, NZ = -HDR_H / SLANT_LEN, SLANT_D / SLANT_LEN   # outward normal of slanted f
 
 COL = {
     "shell": (0.93, 0.93, 0.90), "shell2": (0.85, 0.86, 0.84), "front": (0.97, 0.97, 0.95),
-    "dark": (0.18, 0.19, 0.21), "screen": (0.20, 0.45, 0.75), "rubber": (0.12, 0.12, 0.12),
+    "dark": (0.18, 0.19, 0.21), "screen": (0.04, 0.09, 0.17), "rubber": (0.12, 0.12, 0.12),
     "metal": (0.70, 0.72, 0.75), "brass": (0.80, 0.65, 0.30), "led": (0.20, 0.85, 0.35),
     "pcb": (0.10, 0.50, 0.25), "batt": (0.20, 0.35, 0.70), "belt": (0.15, 0.15, 0.15),
     "spring": (0.75, 0.75, 0.80), "blister": (0.80, 0.85, 0.90), "foil": (0.75, 0.77, 0.80),
@@ -38,9 +43,10 @@ def add(name, group, color, prim, transforms=None, cut=False):
     """prim: ('box', x0,y0,z0,x1,y1,z1) | ('cyl', r, h, (bx,by,bz), (dx,dy,dz))
              ('tube', ri, ro, h, base, dir) | ('prismx', x0, x1, [(y,z),...])
              ('dome', r, centre, dir) | ('torus', R, r, centre, dir)
+             ('rects', [(x0,y0,x1,y1),...], z0, z1)  many flat boxes (screen pixels)
        transforms: list of ('rot', (ax,ay,az), deg) [about origin] or ('move', (x,y,z))
        cut=True -> hidden in the cut-away preview (right wall, roof ...)"""
-    parts.append(dict(name=name, group=group, color=COL[color], prim=prim,
+    parts.append(dict(name=name, group=group, color=COL.get(color, color) if isinstance(color, str) else tuple(color), prim=prim,
                       tf=transforms or [], cut=cut))
 
 
@@ -53,6 +59,23 @@ def on_slant(u, x, off, thick, sx, su, name, group, color, prim="box", r=None):
         add(name, group, color, ("box", -sx / 2, -su / 2, -thick / 2, sx / 2, su / 2, thick / 2), tf)
     else:
         add(name, group, color, ("cyl", r, thick, (0, 0, -thick / 2), (0, 0, 1)), tf)
+
+
+SCREEN_W, SCREEN_H, SCREEN_X, SCREEN_OFF = 58.0, 43.0, -36.0, 2.4   # active area, top surface
+
+
+def screen_ui():
+    """Raised screen graphics: each colour layer of the 320x240 layout becomes one part."""
+    u = SLANT_LEN / 2
+    cy = u * SLANT_D / SLANT_LEN + NY * SCREEN_OFF
+    cz = STACK_Z1 + u * HDR_H / SLANT_LEN + NZ * SCREEN_OFF
+    tf = [("rot", (1, 0, 0), SLANT_ANG), ("move", (SCREEN_X, cy, cz))]
+    px, py = SCREEN_W / UI_PX[0], SCREEN_H / UI_PX[1]
+    for L in UI_LAYERS:
+        z0 = 0.04 * L["level"]
+        rs = [(-SCREEN_W / 2 + c0 * px, SCREEN_H / 2 - r1 * py, -SCREEN_W / 2 + c1 * px, SCREEN_H / 2 - r0 * py)
+              for c0, r0, c1, r1 in L["rects"]]
+        add(L["name"], "Display_Screen", L["color"], ("rects", rs, z0, z0 + 0.04), tf)
 
 
 def rounded_profile():
@@ -102,6 +125,7 @@ def build():
     # ---------------- HEADER: display + speaker ----------------
     on_slant(SLANT_LEN / 2, -36, 1.0, 2.0, 72, 52, "Display_Module_Bezel", "Header", "dark")
     on_slant(SLANT_LEN / 2, -36, 2.2, 0.4, 58, 43, "Display_Active_Screen", "Header", "screen")
+    screen_ui()
     on_slant(SLANT_LEN / 2, 40, 0.75, 1.5, 0, 0, "Speaker_Grille", "Header", "dark", "cyl", 21)
     for k in range(-3, 4):
         on_slant(SLANT_LEN / 2 + k * 5, 40, 1.7, 0.4, 30 - abs(k) * 3.5, 2.2,

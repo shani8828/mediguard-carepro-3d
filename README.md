@@ -7,6 +7,11 @@
 ![Front iso](previews/preview_iso_front.png)
 ![Cut-away](previews/preview_cutaway.png)
 
+## Display screen
+The 2.8" TFT (58 × 43 mm active area) shows a 320 × 240 px layout: date and time in the top bar, the time-of-day chip, the medicine name and strength, the dose, and the drawer number. Each colour layer is a separate raised part (`Screen_*`) in the FreeCAD model, the STL and the viewer. The values shown are examples; edit them at the top of `source/make_screen.py` and run `source/assemble.sh` to rebuild.
+
+![Screen](previews/preview_screen.png)
+
 ## Files
 | File | What it is |
 |---|---|
@@ -14,7 +19,7 @@
 | `MediGuard_CarePro_C.FCMacro` | FreeCAD macro — builds the full coloured, editable model and saves `.FCStd` + `.step` |
 | `MediGuard_CarePro_C.stl` | Mesh for 3D printing / quick viewing (no colours) |
 | `previews/` | Rendered images |
-| `source/` | Python geometry definition and build scripts |
+| `source/` | Python geometry definition, screen layout and build scripts |
 
 ## Open in FreeCAD
 Macro → Macros… → select `MediGuard_CarePro_C.FCMacro` → Execute.

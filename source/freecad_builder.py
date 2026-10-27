@@ -36,6 +36,9 @@ def _make(p):
     elif k == "dome":
         r, c, d = a
         s = Part.makeSphere(r, V(*c), V(*d), 0, 90, 360)
+    elif k == "rects":
+        rs, z0, z1 = a
+        s = Part.makeCompound([Part.makeBox(x1 - x0, y1 - y0, z1 - z0, V(x0, y0, z0)) for x0, y0, x1, y1 in rs])
     elif k == "torus":
         R, r, c, d = a
         s = Part.makeTorus(R, r, V(*c), V(*d))
